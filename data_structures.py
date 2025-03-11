@@ -1,16 +1,10 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Literal, Optional
 
-
-class CalendarEvent(BaseModel):
-    name: str
-    date: str
-    participants: list[str]
-
-
+### knowledge base to store people and their emails
 class KBResponse(BaseModel):
-    answer: str = Field(description="The answer to the user's question.")
-    source: int = Field(description="The record id of the answer.")
+    person: str = Field(description="Name of the person")
+    email: int = Field(description="Email address of the person")
 
 
 ### EVENTS
@@ -23,9 +17,6 @@ class EventExtraction(BaseModel):
         description="Whether this text describes a calendar event"
     )
     confidence_score: float = Field(description="Confidence score between 0 and 1")
-
-
-class EventDetails(BaseModel):
     """Second LLM call: Parse specific event details"""
 
     name: str = Field(description="Name of the event")
@@ -36,12 +27,46 @@ class EventDetails(BaseModel):
     participants: list[str] = Field(description="List of participants")
 
 
-class EventConfirmation(BaseModel):
-    """Third LLM call: Generate confirmation message"""
+class CalendarRequestType(BaseModel):
+    """Router LLM call: Determine the type of calendar request"""
 
-    confirmation_message: str = Field(
-        description="Natural language confirmation message"
+    request_type: Literal["new_event", "modify_event", "other"] = Field(
+        description="Type of calendar request being made"
     )
-    calendar_link: Optional[str] = Field(
-        description="Generated calendar link if applicable"
+    confidence_score: float = Field(description="Confidence score between 0 and 1")
+    description: str = Field(description="Cleaned description of the request")
+
+
+class NewEventDetails(BaseModel):
+    """Details for creating a new event"""
+
+    name: str = Field(description="Name of the event")
+    date: str = Field(description="Date and time of the event (ISO 8601)")
+    duration_minutes: int = Field(description="Duration in minutes")
+    participants: list[str] = Field(description="List of participants")
+
+
+class Change(BaseModel):
+    """Details for changing an existing event"""
+
+    field: str = Field(description="Field to change")
+    new_value: str = Field(description="New value for the field")
+
+
+class ModifyEventDetails(BaseModel):
+    """Details for modifying an existing event"""
+
+    event_identifier: str = Field(
+        description="Description to identify the existing event"
     )
+    changes: list[Change] = Field(description="List of changes to make")
+    participants_to_add: list[str] = Field(description="New participants to add")
+    participants_to_remove: list[str] = Field(description="Participants to remove")
+
+
+class CalendarResponse(BaseModel):
+    """Final response format"""
+
+    success: bool = Field(description="Whether the operation was successful")
+    message: str = Field(description="User-friendly response message")
+    calendar_link: Optional[str] = Field(description="Calendar link if applicable")
