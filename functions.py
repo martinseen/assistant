@@ -1,11 +1,14 @@
 from data_structures import * 
 
-from typing import Optional, Literal
-from pydantic import BaseModel, Field
+from typing import Optional
 from openai import OpenAI
 import os
 import logging
 from datetime import datetime
+from google_calendar import create_google_calendar_event
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Set up logging configuration
 logging.basicConfig(
@@ -62,14 +65,23 @@ def handle_new_event(description: str) -> CalendarResponse:
         response_format=NewEventDetails,
     )
     details = completion.choices[0].message.parsed
-
+    event = details.model_dump()
     logger.info(f"New event: {details.model_dump_json(indent=2)}")
+
+    created = create_google_calendar_event(
+        summary = event['name'], 
+        description = "Scheduled by Martin's AIssistant",
+        start_time= event['date'],
+        duration= event['duration_minutes'],
+        attendees= event['participants']
+    )
 
     # Generate response
     return CalendarResponse(
         success=True,
         message=f"Created new event '{details.name}' for {details.date} with {', '.join(details.participants)}",
-        calendar_link=f"calendar://new?event={details.name}",
+        calendar_link=f"{created['event_link']}",
+        meet_link=f"{created['meet_link']}"
     )
 
 def handle_modify_event(description: str) -> CalendarResponse:

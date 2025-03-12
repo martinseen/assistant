@@ -2,7 +2,7 @@ import sounddevice as sd
 import speech_recognition as sr
 
 # Parameters
-duration = 7  # seconds
+duration = 10  # seconds
 sample_rate = 44100
 
 def record_audio(): 

@@ -1,8 +1,11 @@
 import os
+import json 
+from datetime import datetime, timedelta 
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
+from email_base import emails
 
 # Define the required scopes
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
@@ -27,6 +30,15 @@ def authenticate():
 
     return creds
 
+def get_attendee_emails(attendees):
+    # Load the knowledge base
+    participants = []
+    for part in attendees: 
+        if part in emails.keys():
+            participants.append(emails[part])
+    return participants
+
+
 # Build the Calendar API service
 def get_calendar_service():
     creds = authenticate()
@@ -34,21 +46,27 @@ def get_calendar_service():
     return service
 
 
-def create_google_calendar_event(summary, description, start_time, end_time, attendees):
+def create_google_calendar_event(summary, description, start_time, duration, attendees):
     service = get_calendar_service()
+
+    start_dt = datetime.fromisoformat(start_time)
+    end_dt = start_dt + timedelta(minutes=duration)
+    end_time = end_dt.isoformat()
+
+    participants = get_attendee_emails(attendees)
 
     event = {
         "summary": summary,
         "description": description,
         "start": {
             "dateTime": start_time,
-            "timeZone": "America/Los_Angeles",
+            "timeZone": "Europe/Warsaw",
         },
         "end": {
             "dateTime": end_time,
-            "timeZone": "America/Los_Angeles",
+            "timeZone": "Europe/Warsaw",
         },
-        "attendees": [{"email": email} for email in attendees],
+        "attendees": [{"email": email} for email in participants],
         "conferenceData": {
             "createRequest": {
                 "requestId": "some-random-string",

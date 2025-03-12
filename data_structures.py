@@ -70,3 +70,4 @@ class CalendarResponse(BaseModel):
     success: bool = Field(description="Whether the operation was successful")
     message: str = Field(description="User-friendly response message")
     calendar_link: Optional[str] = Field(description="Calendar link if applicable")
+    meet_link: Optional[str] = Field(description="Google Meet link if applicable")
