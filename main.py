@@ -11,11 +11,16 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def main(): 
-    user_input = vr.record_audio()
-    print(f"You said: {user_input}")
-    # user_input = "Schedule a meeting with Martin and Martin Mailsoar and Dude at 2pm the day after tomorrow that lasts 45 minutes and it's called 'Brainstorming'"
-    response = fn.process_calendar_request(user_input) 
-    print(response) 
+    try:
+        user_input = vr.record_audio()
+        print(f"You said: {user_input}")
+        # user_input = "Schedule a meeting with Martin and Martin Mailsoar and Dude at 2pm the day after tomorrow that lasts 45 minutes and it's called 'Brainstorming'"
+        response = fn.process_calendar_request(user_input) 
+        print(response) 
+    except KeyboardInterrupt as e: 
+        print("See you later") 
+    except Exception as e: 
+        print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
     main()

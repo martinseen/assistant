@@ -51,22 +51,17 @@ def handle_new_event(description: str) -> CalendarResponse:
     today = datetime.now()
     date_context = f"Today is {today.strftime('%A, %B %d, %Y')}."
 
-
-    # Get event details
-    completion = client.beta.chat.completions.parse(
+    response = client.responses.parse(
         model=model,
-        messages=[
-            {
-                "role": "system",
-                "content": f"{date_context} Extract details for creating a new calendar event. When dates reference 'next Tuesday' or similar relative dates, use this current date as reference.",
-            },
-            {"role": "user", "content": description},
-        ],
-        response_format=NewEventDetails,
+        instructions=f"{date_context} Extract details for creating a new calendar event. When dates reference 'next Tuesday' or similar relative dates, use this current date as reference.",
+        input=description,
+        text_format=NewEventDetails,
     )
-    details = completion.choices[0].message.parsed
-    event = details.model_dump()
-    logger.info(f"New event: {details.model_dump_json(indent=2)}")
+    response_model = response.output[0].content[0].parsed
+    event = response_model.model_dump()
+    logger.info(response_model.model_dump_json(indent=2))
+
+
 
     created = create_google_calendar_event(
         summary = event['name'], 
@@ -79,7 +74,7 @@ def handle_new_event(description: str) -> CalendarResponse:
     # Generate response
     return CalendarResponse(
         success=True,
-        message=f"Created new event '{details.name}' for {details.date} with {', '.join(details.participants)}",
+        message=f"Created new event '{response_model.name}' for {response_model.date} with {', '.join(response_model.participants)}",
         calendar_link=f"{created['event_link']}",
         meet_link=f"{created['meet_link']}"
     )
